@@ -14,6 +14,7 @@ type Product = {
   unitOfMeasure: string
   onHand: number
   freeToUse: number
+  minReorderLevel?: number
 }
 
 export function ProductTable({ products }: { products: Product[] }) {
@@ -217,6 +218,10 @@ export function ProductTable({ products }: { products: Product[] }) {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Unit of Measure</label>
                       <input type="text" name="unitOfMeasure" defaultValue={editingProductDetails.unitOfMeasure} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Min Reorder Level</label>
+                      <input type="number" min="0" name="minReorderLevel" defaultValue={editingProductDetails.minReorderLevel ?? 10} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                     </div>
                   </div>
                 </div>

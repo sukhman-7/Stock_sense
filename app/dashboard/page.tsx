@@ -63,9 +63,8 @@ export default async function DashboardPage(props: { searchParams: Promise<{ typ
     where: { onHand: { lte: 0 } }
   })
   
-  const lowStockItems = await prisma.product.count({
-    where: { onHand: { gt: 0, lte: 10 } }
-  })
+  const lowStockResult = await prisma.$queryRaw<{count: number}[]>`SELECT COUNT(*)::int as count FROM "Product" WHERE "onHand" > 0 AND "onHand" <= "minReorderLevel"`;
+  const lowStockItems = Number(lowStockResult[0]?.count) || 0;
 
   const scheduledTransfers = await prisma.internalTransfer.count({
     where: { status: { in: ['Draft', 'Ready'] } }

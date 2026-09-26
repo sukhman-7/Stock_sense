@@ -275,10 +275,11 @@ export async function createProduct(formData: FormData) {
     const unitOfMeasure = (formData.get('unitOfMeasure') as string) || 'Units'
     const initialStockStr = formData.get('initialStock') as string
     const initialStock = Number(initialStockStr) || 0
+    const minReorderLevel = Number(formData.get('minReorderLevel')) || 0
     
     await prisma.$transaction(async (tx) => {
       const product = await tx.product.create({
-        data: { name, sku, cost, category, unitOfMeasure, onHand: initialStock, freeToUse: initialStock }
+        data: { name, sku, cost, category, unitOfMeasure, onHand: initialStock, freeToUse: initialStock, minReorderLevel }
       })
 
       if (initialStock > 0) {
@@ -436,10 +437,11 @@ export async function updateProductDetails(id: string, formData: FormData) {
     const categoryRaw = formData.get('category') as string | null
     const category = categoryRaw && categoryRaw.trim() !== '' ? categoryRaw.trim() : null
     const unitOfMeasure = (formData.get('unitOfMeasure') as string) || 'Units'
+    const minReorderLevel = Number(formData.get('minReorderLevel')) || 0
     
     await prisma.product.update({
       where: { id },
-      data: { name, sku, cost, category, unitOfMeasure }
+      data: { name, sku, cost, category, unitOfMeasure, minReorderLevel }
     })
     
     revalidatePath('/products')
