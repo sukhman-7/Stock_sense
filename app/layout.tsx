@@ -38,11 +38,11 @@ export default async function RootLayout({
                       <Link href="/dashboard" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                         <Home className="w-4 h-4 mr-2"/> Dashboard
                       </Link>
-                      <div className="relative group">
+                      <div className="relative group flex items-center h-full">
                         <button className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium h-full">
                           <Box className="w-4 h-4 mr-2"/> Operations
                         </button>
-                        <div className="absolute left-0 hidden w-48 bg-white border border-gray-200 rounded-md shadow-lg group-hover:block top-16">
+                        <div className="absolute left-0 hidden w-48 bg-white border border-gray-200 rounded-md shadow-lg group-hover:block top-full mt-0">
                           <Link href="/operations/receipts" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Receipts (IN)</Link>
                           <Link href="/operations/deliveries" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Delivery Orders (OUT)</Link>
                         </div>
@@ -53,11 +53,11 @@ export default async function RootLayout({
                       <Link href="/history" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                         <History className="w-4 h-4 mr-2"/> Move History
                       </Link>
-                      <div className="relative group">
+                      <div className="relative group flex items-center h-full">
                         <button className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium h-full">
                           <Settings className="w-4 h-4 mr-2"/> Settings
                         </button>
-                        <div className="absolute left-0 hidden w-48 bg-white border border-gray-200 rounded-md shadow-lg group-hover:block top-16">
+                        <div className="absolute left-0 hidden w-48 bg-white border border-gray-200 rounded-md shadow-lg group-hover:block top-full mt-0">
                           <Link href="/settings/warehouses" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Warehouses</Link>
                           <Link href="/settings/locations" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Locations</Link>
                         </div>
