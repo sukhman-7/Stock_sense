@@ -22,7 +22,11 @@ export function CreateDeliveryModal() {
     } else {
       toast.success('Delivery created successfully')
       setIsOpen(false)
-      router.refresh()
+      if (result?.id) {
+        router.push(`/operations/deliveries/${result.id}`)
+      } else {
+        router.refresh()
+      }
     }
   }
 

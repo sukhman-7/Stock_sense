@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { ReceiptActions } from './ReceiptActions'
+import { AddReceiptLine } from './AddReceiptLine'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
@@ -20,6 +21,10 @@ export default async function ReceiptDetailPage(props: { params: Promise<{ id: s
   if (!receipt) {
     notFound()
   }
+
+  const products = await prisma.product.findMany({
+    orderBy: { name: 'asc' }
+  })
 
   const steps = ['Draft', 'Ready', 'Done']
 
@@ -102,6 +107,12 @@ export default async function ReceiptDetailPage(props: { params: Promise<{ id: s
             )}
           </tbody>
         </table>
+        
+        {receipt.status === 'Draft' && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <AddReceiptLine receiptId={receipt.id} products={products} />
+          </div>
+        )}
       </div>
     </div>
   )

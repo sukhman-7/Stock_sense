@@ -371,7 +371,7 @@ export async function createReceipt(formData: FormData) {
     const autoIncrement = String(count + 1).padStart(4, '0')
     const reference = `${location.warehouse.shortCode}/IN/${autoIncrement}`
     
-    await prisma.stockReceipt.create({
+    const receipt = await prisma.stockReceipt.create({
       data: {
         reference,
         vendor,
@@ -383,7 +383,7 @@ export async function createReceipt(formData: FormData) {
     })
     
     revalidatePath('/operations/receipts')
-    return { success: true }
+    return { success: true, id: receipt.id }
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to create receipt" }
   }
@@ -408,7 +408,7 @@ export async function createDelivery(formData: FormData) {
     const autoIncrement = String(count + 1).padStart(4, '0')
     const reference = `${whCode}/OUT/${autoIncrement}`
     
-    await prisma.deliveryOrder.create({
+    const delivery = await prisma.deliveryOrder.create({
       data: {
         reference,
         customer,
@@ -419,7 +419,7 @@ export async function createDelivery(formData: FormData) {
     })
     
     revalidatePath('/operations/deliveries')
-    return { success: true }
+    return { success: true, id: delivery.id }
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to create delivery" }
   }
@@ -794,5 +794,46 @@ export async function validateAdjustment(adjustmentId: string) {
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to validate adjustment" }
+  }
+}
+
+export async function addReceiptLine(receiptId: string, productId: string, quantity: number) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+
+    await prisma.orderLineItem.create({
+      data: {
+        receiptId,
+        productId,
+        quantity,
+      }
+    })
+
+    revalidatePath(`/operations/receipts/${receiptId}`)
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to add line item" }
+  }
+}
+
+export async function addDeliveryLine(deliveryId: string, productId: string, quantity: number) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+
+    await prisma.orderLineItem.create({
+      data: {
+        deliveryId,
+        productId,
+        quantity,
+        reservedQty: 0
+      }
+    })
+
+    revalidatePath(`/operations/deliveries/${deliveryId}`)
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to add line item" }
   }
 }

@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { createReceipt } from '@/app/actions'
+import { addReceiptLine } from '@/app/actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
-export function CreateReceiptModal({ locations }: { locations: { id: string, path: string }[] }) {
+export function AddReceiptLine({ receiptId, products }: { receiptId: string, products: { id: string, name: string, sku: string }[] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -15,18 +15,23 @@ export function CreateReceiptModal({ locations }: { locations: { id: string, pat
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
-    const result = await createReceipt(formData)
+    const productId = formData.get('productId') as string
+    const quantity = Number(formData.get('quantity'))
+
+    if (quantity <= 0) {
+      toast.error("Quantity must be greater than 0")
+      setIsLoading(false)
+      return
+    }
+
+    const result = await addReceiptLine(receiptId, productId, quantity)
     setIsLoading(false)
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success('Receipt created successfully')
+      toast.success('Line item added successfully')
       setIsOpen(false)
-      if (result?.id) {
-        router.push(`/operations/receipts/${result.id}`)
-      } else {
-        router.refresh()
-      }
+      router.refresh()
     }
   }
 
@@ -34,10 +39,10 @@ export function CreateReceiptModal({ locations }: { locations: { id: string, pat
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+        className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
       >
-        <Plus className="-ml-1 mr-2 h-5 w-5" />
-        New Receipt
+        <Plus className="-ml-1 mr-2 h-4 w-4" />
+        Add Line
       </button>
 
       {isOpen && (
@@ -48,24 +53,20 @@ export function CreateReceiptModal({ locations }: { locations: { id: string, pat
             <div className="relative z-20 inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <form onSubmit={handleSubmit}>
                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">Create New Receipt</h3>
+                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">Add Line Item</h3>
                   <div className="mt-4 space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Vendor / Contact</label>
-                      <input required type="text" name="vendor" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Destination Location</label>
-                      <select required name="locationId" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="">Select a location</option>
-                        {locations.map(loc => (
-                          <option key={loc.id} value={loc.id}>{loc.path}</option>
+                      <label className="block text-sm font-medium text-gray-700">Product</label>
+                      <select required name="productId" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Select a product</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Schedule Date</label>
-                      <input required type="date" name="scheduleDate" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                      <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                      <input required type="number" min="1" name="quantity" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                     </div>
                   </div>
                 </div>

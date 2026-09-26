@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { DeliveryActions } from './DeliveryActions'
+import { AddDeliveryLine } from './AddDeliveryLine'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
@@ -19,6 +20,10 @@ export default async function DeliveryDetailPage(props: { params: Promise<{ id: 
   if (!delivery) {
     notFound()
   }
+
+  const products = await prisma.product.findMany({
+    orderBy: { name: 'asc' }
+  })
 
   const steps = ['Draft', 'Waiting', 'Ready', 'Done']
 
@@ -109,6 +114,12 @@ export default async function DeliveryDetailPage(props: { params: Promise<{ id: 
             )}
           </tbody>
         </table>
+
+        {delivery.status === 'Draft' && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <AddDeliveryLine deliveryId={delivery.id} products={products} />
+          </div>
+        )}
       </div>
     </div>
   )
