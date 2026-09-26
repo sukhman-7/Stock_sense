@@ -51,6 +51,9 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).name = token.name;
+        if (token.email) {
+          session.user.email = token.email;
+        }
       }
       return session
     },
@@ -58,6 +61,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.name = user.name;
+        token.email = user.email;
       }
       return token
     }

@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { CreateWarehouseModal } from './CreateWarehouseModal'
+import { EditWarehouseModal } from './EditWarehouseModal'
 
 export default async function WarehousesPage() {
   const warehouses = await prisma.warehouse.findMany({
@@ -22,6 +23,7 @@ export default async function WarehousesPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Short Code</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Locations Count</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -31,6 +33,9 @@ export default async function WarehousesPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{wh.shortCode}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{wh.address || '-'}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{wh._count.locations}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <EditWarehouseModal warehouse={{ id: wh.id, name: wh.name, shortCode: wh.shortCode, address: wh.address }} />
+                </td>
               </tr>
             ))}
             {warehouses.length === 0 && (

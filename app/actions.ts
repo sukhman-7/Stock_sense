@@ -384,3 +384,71 @@ export async function createDelivery(formData: FormData) {
     return { error: err instanceof Error ? err.message : "Failed to create delivery" }
   }
 }
+
+export async function updateProductDetails(id: string, formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+    
+    const name = formData.get('name') as string
+    const sku = formData.get('sku') as string
+    const cost = parseFloat(formData.get('cost') as string)
+    
+    await prisma.product.update({
+      where: { id },
+      data: { name, sku, cost }
+    })
+    
+    revalidatePath('/products')
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to update product" }
+  }
+}
+
+export async function updateWarehouse(id: string, formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+    
+    const name = formData.get('name') as string
+    const shortCode = formData.get('shortCode') as string
+    const address = formData.get('address') as string
+    
+    await prisma.warehouse.update({
+      where: { id },
+      data: { name, shortCode, address }
+    })
+    
+    revalidatePath('/settings/warehouses')
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to update warehouse" }
+  }
+}
+
+export async function updateLocation(id: string, formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+    
+    const name = formData.get('name') as string
+    const shortCode = formData.get('shortCode') as string
+    const warehouseId = formData.get('warehouseId') as string
+    
+    const warehouse = await prisma.warehouse.findUnique({ where: { id: warehouseId } })
+    if (!warehouse) throw new Error("Warehouse not found")
+    
+    const path = `${warehouse.shortCode}/${shortCode}`
+    
+    await prisma.location.update({
+      where: { id },
+      data: { name, shortCode, warehouseId, path }
+    })
+    
+    revalidatePath('/settings/locations')
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to update location" }
+  }
+}

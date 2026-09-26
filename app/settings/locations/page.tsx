@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { CreateLocationModal } from './CreateLocationModal'
+import { EditLocationModal } from './EditLocationModal'
 
 export default async function LocationsPage() {
   const locations = await prisma.location.findMany({
@@ -26,6 +27,7 @@ export default async function LocationsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Short Code</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warehouse</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -35,6 +37,9 @@ export default async function LocationsPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{loc.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{loc.shortCode}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{loc.warehouse.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <EditLocationModal location={{ id: loc.id, name: loc.name, shortCode: loc.shortCode, warehouseId: loc.warehouseId }} warehouses={warehouses} />
+                </td>
               </tr>
             ))}
             {locations.length === 0 && (
