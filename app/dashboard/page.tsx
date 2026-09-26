@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
-import { ArrowRight, PackageOpen, Truck, Package, History, MapPin, Building2 } from 'lucide-react'
+import { ArrowRight, PackageOpen, Truck, Package, History, MapPin, Building2, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import DashboardFilterBar from './DashboardFilterBar'
 
 interface Operation {
@@ -57,6 +57,37 @@ export default async function DashboardPage(props: { searchParams: Promise<{ typ
     }
   })
 
+  const totalProducts = await prisma.product.count()
+  
+  const outOfStockItems = await prisma.product.count({
+    where: { onHand: { lte: 0 } }
+  })
+  
+  const lowStockItems = await prisma.product.count({
+    where: { onHand: { gt: 0, lte: 10 } }
+  })
+
+  const scheduledTransfers = await prisma.internalTransfer.count({
+    where: { status: { in: ['Draft', 'Ready'] } }
+  })
+
+  const lateTransfers = await prisma.internalTransfer.count({
+    where: {
+      status: { not: 'Done' },
+      scheduleDate: { lt: new Date() }
+    }
+  })
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const totalTransfers = await prisma.internalTransfer.count({
+    where: {
+      status: { not: 'Done' },
+      scheduleDate: { gte: today }
+    }
+  })
+
   let operations: Operation[] = [];
 
   const shouldFetchReceipts = !filterType || filterType === 'All Types' || filterType === 'Receipts';
@@ -108,7 +139,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ typ
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Receipts Card */}
         <div className="bg-white overflow-hidden shadow rounded-lg flex flex-col">
           <div className="p-5 grow">
@@ -169,6 +200,96 @@ export default async function DashboardPage(props: { searchParams: Promise<{ typ
             <div className="text-sm">
               <Link href="/operations/deliveries" className="font-medium text-green-600 hover:text-green-500 flex items-center">
                 View Delivery Orders <ArrowRight className="ml-1 w-4 h-4"/>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Internal Transfers Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg flex flex-col">
+          <div className="p-5 grow">
+            <div className="flex items-center">
+              <div className="shrink-0 bg-purple-100 rounded-md p-3">
+                <ArrowRightLeft className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Internal Transfers</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-gray-900">{scheduledTransfers} scheduled</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+            <div className="mt-6">
+              <div className="flex space-x-4 text-sm">
+                <span className="text-red-600 font-medium">{lateTransfers} Late</span>
+                <span className="text-gray-500">{totalTransfers} operations</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-5 py-3">
+            <div className="text-sm">
+              <Link href="/operations/internal" className="font-medium text-purple-600 hover:text-purple-500 flex items-center">
+                View Internal Transfers <ArrowRight className="ml-1 w-4 h-4"/>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Products Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg flex flex-col">
+          <div className="p-5 grow">
+            <div className="flex items-center">
+              <div className="shrink-0 bg-indigo-100 rounded-md p-3">
+                <Package className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Products</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-gray-900">{totalProducts} registered products</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+            <div className="mt-6">
+              <div className="flex space-x-4 text-sm">
+                <span className="text-gray-500">View inventory catalog</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-5 py-3">
+            <div className="text-sm">
+              <Link href="/products" className="font-medium text-indigo-600 hover:text-indigo-500 flex items-center">
+                View Products <ArrowRight className="ml-1 w-4 h-4"/>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Stock Alerts Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg flex flex-col">
+          <div className="p-5 grow">
+            <div className="flex items-center">
+              <div className="shrink-0 bg-red-100 rounded-md p-3">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Stock Alerts</dt>
+                  <dd className="mt-1 flex flex-col space-y-1">
+                    <div className="text-xl font-semibold text-red-600">{outOfStockItems} Out of Stock</div>
+                    <div className="text-xl font-semibold text-orange-600">{lowStockItems} Low Stock</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-5 py-3">
+            <div className="text-sm">
+              <Link href="/products" className="font-medium text-red-600 hover:text-red-500 flex items-center">
+                View Products <ArrowRight className="ml-1 w-4 h-4"/>
               </Link>
             </div>
           </div>
