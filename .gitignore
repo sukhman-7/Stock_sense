@@ -56,3 +56,12 @@ next-env.d.ts
 # prisma (in case of sqlite testing)
 *.db
 *.db-journal
+
+# AI tools & skills
+.agents/
+.claude/
+.cursor/
+.devin/
+AGENTS.md
+CLAUDE.md
+
