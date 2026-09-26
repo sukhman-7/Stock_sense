@@ -44,6 +44,7 @@ export default async function ReceiptsPage() {
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     receipt.status === 'Done' ? 'bg-green-100 text-green-800' :
                     receipt.status === 'Ready' ? 'bg-blue-100 text-blue-800' :
+                    receipt.status === 'Cancelled' || receipt.status === 'Canceled' ? 'bg-red-100 text-red-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {receipt.status}

@@ -45,6 +45,8 @@ model Product {
   name        String
   sku         String   @unique
   cost        Float    @default(0.0)
+  category    String?
+  unitOfMeasure String @default("Units")
   onHand      Int      @default(0)
   freeToUse   Int      @default(0)
 

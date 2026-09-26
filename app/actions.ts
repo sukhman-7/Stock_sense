@@ -10,9 +10,22 @@ export async function updateStockLevel(productId: string, newQuantity: number) {
     const session = await getServerSession(authOptions)
     if (!session) return { error: "Not authenticated" }
     
-    await prisma.product.update({
-      where: { id: productId },
-      data: { onHand: newQuantity }
+    await prisma.$transaction(async (tx) => {
+      // Lock the row to prevent concurrent updates reading stale onHand values
+      await tx.$executeRawUnsafe(`SELECT id FROM "Product" WHERE id = '${productId}' FOR UPDATE`)
+      
+      const product = await tx.product.findUnique({ where: { id: productId } })
+      if (!product) throw new Error("Product not found")
+      
+      const difference = newQuantity - product.onHand
+      
+      await tx.product.update({
+        where: { id: productId },
+        data: { 
+          onHand: newQuantity,
+          freeToUse: { increment: difference }
+        }
+      })
     })
     
     revalidatePath('/products')
@@ -253,9 +266,27 @@ export async function createProduct(formData: FormData) {
     const name = formData.get('name') as string
     const sku = formData.get('sku') as string
     const cost = parseFloat(formData.get('cost') as string)
+    const categoryRaw = formData.get('category') as string | null
+    const category = categoryRaw && categoryRaw.trim() !== '' ? categoryRaw.trim() : null
+    const unitOfMeasure = (formData.get('unitOfMeasure') as string) || 'Units'
+    const initialStockStr = formData.get('initialStock') as string
+    const initialStock = Number(initialStockStr) || 0
     
-    await prisma.product.create({
-      data: { name, sku, cost }
+    await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: { name, sku, cost, category, unitOfMeasure, onHand: initialStock, freeToUse: initialStock }
+      })
+
+      if (initialStock > 0) {
+        await tx.stockMove.create({
+          data: {
+            reference: "INIT-" + product.sku,
+            quantity: initialStock,
+            productId: product.id,
+            status: 'Done'
+          }
+        })
+      }
     })
     
     revalidatePath('/products')
@@ -393,10 +424,13 @@ export async function updateProductDetails(id: string, formData: FormData) {
     const name = formData.get('name') as string
     const sku = formData.get('sku') as string
     const cost = parseFloat(formData.get('cost') as string)
+    const categoryRaw = formData.get('category') as string | null
+    const category = categoryRaw && categoryRaw.trim() !== '' ? categoryRaw.trim() : null
+    const unitOfMeasure = (formData.get('unitOfMeasure') as string) || 'Units'
     
     await prisma.product.update({
       where: { id },
-      data: { name, sku, cost }
+      data: { name, sku, cost, category, unitOfMeasure }
     })
     
     revalidatePath('/products')

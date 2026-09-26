@@ -1,8 +1,22 @@
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import { ArrowRight, PackageOpen, Truck, Package, History, MapPin, Building2 } from 'lucide-react'
+import DashboardFilterBar from './DashboardFilterBar'
 
-export default async function DashboardPage() {
+interface Operation {
+  id: string;
+  type: 'Receipt' | 'Delivery';
+  reference: string;
+  contact: string;
+  date: Date;
+  status: string;
+}
+
+export default async function DashboardPage(props: { searchParams: Promise<{ type?: string, status?: string }> }) {
+  const searchParams = await props.searchParams;
+  const filterType = searchParams.type;
+  const filterStatus = searchParams.status;
+
   const receiptsToReceive = await prisma.stockReceipt.count({
     where: { status: { in: ['Draft', 'Ready'] } }
   })
@@ -42,6 +56,53 @@ export default async function DashboardPage() {
       scheduleDate: { gte: new Date() }
     }
   })
+
+  let operations: Operation[] = [];
+
+  const shouldFetchReceipts = !filterType || filterType === 'All Types' || filterType === 'Receipts';
+  const shouldFetchDeliveries = !filterType || filterType === 'All Types' || filterType === 'Deliveries';
+  
+  const statusFilter = (filterStatus && filterStatus !== 'All Statuses') ? filterStatus : undefined;
+  const statusCondition = statusFilter
+    ? (statusFilter === 'Cancelled' || statusFilter === 'Canceled')
+      ? { in: ['Cancelled', 'Canceled'] }
+      : statusFilter
+    : undefined;
+
+  if (shouldFetchReceipts) {
+    const receipts = await prisma.stockReceipt.findMany({
+      where: statusCondition ? { status: statusCondition } : undefined,
+      orderBy: { scheduleDate: 'desc' },
+      take: 20
+    });
+    operations.push(...receipts.map(r => ({
+      id: r.id,
+      type: 'Receipt' as const,
+      reference: r.reference,
+      contact: r.vendor,
+      date: r.scheduleDate,
+      status: r.status
+    })));
+  }
+
+  if (shouldFetchDeliveries) {
+    const deliveries = await prisma.deliveryOrder.findMany({
+      where: statusCondition ? { status: statusCondition } : undefined,
+      orderBy: { scheduleDate: 'desc' },
+      take: 20
+    });
+    operations.push(...deliveries.map(d => ({
+      id: d.id,
+      type: 'Delivery' as const,
+      reference: d.reference,
+      contact: d.customer,
+      date: d.scheduleDate,
+      status: d.status
+    })));
+  }
+
+  operations.sort((a, b) => b.date.getTime() - a.date.getTime());
+  operations = operations.slice(0, 20);
 
   return (
     <div className="space-y-6">
@@ -111,6 +172,55 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Operations</h2>
+        <DashboardFilterBar />
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {operations.map((op) => (
+                <tr key={`${op.type}-${op.id}`}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${op.type === 'Receipt' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                      {op.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{op.reference}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{op.contact}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{op.date.toLocaleDateString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      op.status === 'Done' ? 'bg-gray-100 text-gray-800' :
+                      op.status === 'Cancelled' || op.status === 'Canceled' ? 'bg-red-100 text-red-800' :
+                      op.status === 'Draft' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-indigo-100 text-indigo-800'
+                    }`}>
+                      {op.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {operations.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                    No operations found matching the filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

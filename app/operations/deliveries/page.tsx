@@ -37,6 +37,7 @@ export default async function DeliveriesPage() {
                     delivery.status === 'Done' ? 'bg-green-100 text-green-800' :
                     delivery.status === 'Ready' ? 'bg-blue-100 text-blue-800' :
                     delivery.status === 'Waiting' ? 'bg-orange-100 text-orange-800' :
+                    delivery.status === 'Cancelled' || delivery.status === 'Canceled' ? 'bg-red-100 text-red-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {delivery.status}

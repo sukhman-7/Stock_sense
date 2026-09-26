@@ -10,6 +10,8 @@ type Product = {
   name: string
   sku: string
   cost: number
+  category?: string | null
+  unitOfMeasure: string
   onHand: number
   freeToUse: number
 }
@@ -87,7 +89,9 @@ export function ProductTable({ products }: { products: Product[] }) {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name / Code</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Per Unit Cost</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UoM</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">On Hand</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Free to Use</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -101,7 +105,13 @@ export function ProductTable({ products }: { products: Product[] }) {
                   <div className="text-sm text-gray-500">{p.sku}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {p.category || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   ${p.cost.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {p.unitOfMeasure}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                   {p.onHand}
@@ -199,6 +209,14 @@ export function ProductTable({ products }: { products: Product[] }) {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Cost</label>
                       <input required type="number" step="0.01" name="cost" defaultValue={editingProductDetails.cost} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Category</label>
+                      <input type="text" name="category" defaultValue={editingProductDetails.category || ''} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Unit of Measure</label>
+                      <input type="text" name="unitOfMeasure" defaultValue={editingProductDetails.unitOfMeasure} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                     </div>
                   </div>
                 </div>
