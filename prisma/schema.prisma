@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  loginId   String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  receipts  StockReceipt[]
+  deliveries DeliveryOrder[]
+}
+
+model Warehouse {
+  id        String   @id @default(uuid())
+  name      String
+  shortCode String   @unique
+  address   String?
+  locations Location[]
+}
+
+model Location {
+  id           String   @id @default(uuid())
+  name         String
+  shortCode    String
+  warehouseId  String
+  warehouse    Warehouse @relation(fields: [warehouseId], references: [id])
+  path         String   @unique
+  
+  stockMovesFrom StockMove[] @relation("FromLocation")
+  stockMovesTo   StockMove[] @relation("ToLocation")
+  receipts       StockReceipt[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  sku         String   @unique
+  cost        Float    @default(0.0)
+  onHand      Int      @default(0)
+  freeToUse   Int      @default(0)
+
+  stockMoves  StockMove[]
+  orderLines  OrderLineItem[]
+}
+
+model StockMove {
+  id            String   @id @default(uuid())
+  reference     String
+  date          DateTime @default(now())
+  contact       String?
+  fromLocationId String?
+  toLocationId   String?
+  productId     String
+  quantity      Int
+  status        String   @default("Done") // Done, Cancelled
+
+  fromLocation  Location? @relation("FromLocation", fields: [fromLocationId], references: [id])
+  toLocation    Location? @relation("ToLocation", fields: [toLocationId], references: [id])
+  product       Product   @relation(fields: [productId], references: [id])
+}
+
+model StockReceipt {
+  id            String   @id @default(uuid())
+  reference     String   @unique
+  vendor        String
+  locationId    String
+  scheduleDate  DateTime
+  status        String   @default("Draft") // Draft, Ready, Done
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  location      Location @relation(fields: [locationId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+  lines         OrderLineItem[] @relation("ReceiptLines")
+}
+
+model DeliveryOrder {
+  id            String   @id @default(uuid())
+  reference     String   @unique
+  customer      String
+  scheduleDate  DateTime
+  status        String   @default("Draft") // Draft, Waiting, Ready, Done
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+  lines         OrderLineItem[] @relation("DeliveryLines")
+}
+
+model OrderLineItem {
+  id              String   @id @default(uuid())
+  productId       String
+  quantity        Int
+  reservedQty     Int      @default(0)
+  receiptId       String?
+  deliveryId      String?
+
+  product         Product       @relation(fields: [productId], references: [id])
+  receipt         StockReceipt? @relation("ReceiptLines", fields: [receiptId], references: [id])
+  delivery        DeliveryOrder? @relation("DeliveryLines", fields: [deliveryId], references: [id])
+}
