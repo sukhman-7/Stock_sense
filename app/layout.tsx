@@ -45,6 +45,7 @@ export default async function RootLayout({
                   <div className="ml-8 space-y-1">
                     <Link href="/operations/receipts" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Receipts (IN)</Link>
                     <Link href="/operations/deliveries" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Delivery Orders (OUT)</Link>
+                    <Link href="/operations/internal" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Internal Transfers</Link>
                   </div>
                 </div>
 
@@ -55,15 +56,17 @@ export default async function RootLayout({
                   <History className="w-4 h-4 mr-3 text-gray-500" /> Move History
                 </Link>
                 
-                <div className="pt-2">
-                  <div className="flex items-center px-3 py-2 text-sm font-medium text-gray-700">
-                    <Settings className="w-4 h-4 mr-3 text-gray-500" /> Settings
+                {session.user?.role === 'MANAGER' && (
+                  <div className="pt-2">
+                    <div className="flex items-center px-3 py-2 text-sm font-medium text-gray-700">
+                      <Settings className="w-4 h-4 mr-3 text-gray-500" /> Settings
+                    </div>
+                    <div className="ml-8 space-y-1">
+                      <Link href="/settings/warehouses" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Warehouses</Link>
+                      <Link href="/settings/locations" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Locations</Link>
+                    </div>
                   </div>
-                  <div className="ml-8 space-y-1">
-                    <Link href="/settings/warehouses" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Warehouses</Link>
-                    <Link href="/settings/locations" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Locations</Link>
-                  </div>
-                </div>
+                )}
               </div>
             </nav>
 

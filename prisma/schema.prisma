@@ -12,11 +12,16 @@ model User {
   loginId   String   @unique
   email     String   @unique
   password  String
+  role      String   @default("STAFF")
+  otp       String?
+  otpExpiry DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   receipts  StockReceipt[]
   deliveries DeliveryOrder[]
+  internalTransfers InternalTransfer[]
+  adjustments       InventoryAdjustment[]
 }
 
 model Warehouse {
@@ -38,6 +43,9 @@ model Location {
   stockMovesFrom StockMove[] @relation("FromLocation")
   stockMovesTo   StockMove[] @relation("ToLocation")
   receipts       StockReceipt[]
+  transfersFrom  InternalTransfer[] @relation("TransferFrom")
+  transfersTo    InternalTransfer[] @relation("TransferTo")
+  adjustments    InventoryAdjustment[]
 }
 
 model Product {
@@ -52,6 +60,8 @@ model Product {
 
   stockMoves  StockMove[]
   orderLines  OrderLineItem[]
+  transferLines TransferLineItem[]
+  adjustmentLines AdjustmentLineItem[]
 }
 
 model StockMove {
@@ -111,4 +121,58 @@ model OrderLineItem {
   product         Product       @relation(fields: [productId], references: [id])
   receipt         StockReceipt? @relation("ReceiptLines", fields: [receiptId], references: [id])
   delivery        DeliveryOrder? @relation("DeliveryLines", fields: [deliveryId], references: [id])
+}
+
+model InternalTransfer {
+  id               String   @id @default(uuid())
+  reference        String   @unique
+  sourceLocationId String
+  destLocationId   String
+  scheduleDate     DateTime
+  status           String   @default("Draft")
+  userId           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sourceLocation   Location @relation("TransferFrom", fields: [sourceLocationId], references: [id])
+  destLocation     Location @relation("TransferTo", fields: [destLocationId], references: [id])
+  user             User     @relation(fields: [userId], references: [id])
+  lines            TransferLineItem[]
+}
+
+model TransferLineItem {
+  id               String   @id @default(uuid())
+  productId        String
+  quantity         Int
+  transferId       String
+
+  product          Product  @relation(fields: [productId], references: [id])
+  transfer         InternalTransfer @relation(fields: [transferId], references: [id])
+}
+
+model InventoryAdjustment {
+  id               String   @id @default(uuid())
+  reference        String   @unique
+  reason           String
+  locationId       String?
+  date             DateTime
+  status           String   @default("Draft")
+  userId           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  location         Location? @relation(fields: [locationId], references: [id])
+  user             User     @relation(fields: [userId], references: [id])
+  lines            AdjustmentLineItem[]
+}
+
+model AdjustmentLineItem {
+  id               String   @id @default(uuid())
+  productId        String
+  expectedQty      Int
+  countedQty       Int
+  adjustmentId     String
+
+  product          Product  @relation(fields: [productId], references: [id])
+  adjustment       InventoryAdjustment @relation(fields: [adjustmentId], references: [id])
 }

@@ -34,6 +34,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.loginId,
           email: user.email,
+          role: user.role,
         }
       }
     })
@@ -47,12 +48,13 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (token && session.user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).id = token.id;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).name = token.name;
+        session.user.id = token.id;
+        session.user.name = token.name;
         if (token.email) {
           session.user.email = token.email;
+        }
+        if (token.role) {
+          session.user.role = token.role;
         }
       }
       return session
@@ -62,6 +64,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
+        token.role = user.role;
       }
       return token
     }
