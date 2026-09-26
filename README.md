@@ -4,14 +4,29 @@ StockSense is a robust, production-grade Inventory Management System (ERP-Lite) 
 
 ## Features
 
-- **Dashboard**: A quick overview of your key performance indicators (KPIs) including late receipts, waiting delivery orders, and actionable metrics.
-- **Warehouse & Location Management**: Define your storage hierarchy by creating multiple warehouses and nested storage locations (e.g., zones, bins, shelves).
-- **Product Catalog**: Maintain a detailed catalog of your products, including SKUs, per-unit costs, and track real-time physical ("On Hand") and available ("Free to Use") inventory.
+- **Dashboard**: A quick overview of your key performance indicators (KPIs) including late receipts, waiting delivery orders, low/out-of-stock items, and scheduled transfers.
+- **Warehouse & Location Management**: Define your storage hierarchy by creating multiple warehouses and nested storage locations (e.g., zones, bins, shelves, production racks).
+- **Product Catalog**: Maintain a detailed catalog of your products, including categories, SKUs, units of measure (UoM), per-unit costs, and track real-time physical ("On Hand") and available ("Free to Use") inventory.
 - **Operations Lifecycle**:
-  - **Receipts (IN)**: Manage incoming stock from vendors. Transition through `Draft` -> `Ready` -> `Done` states. Validating a receipt physically increments your stock.
-  - **Delivery Orders (OUT)**: Manage outgoing shipments. The system automatically reserves inventory, preventing overselling. If stock isn't available, orders wait safely in the `Waiting` queue.
-- **Move History**: An immutable audit log of every stock movement, tracking when, where, and what was moved.
-- **Secure Authentication**: Built-in authentication powered by NextAuth.js.
+  - **Receipts (Incoming Stock)**: Manage incoming stock from vendors. Transition through `Draft` -> `Ready` -> `Done` states. Validating a receipt physically increments your stock.
+  - **Delivery Orders (Outgoing Stock)**: Manage outgoing customer shipments. The system automatically reserves inventory, preventing overselling. If stock isn't available, orders wait safely in the `Waiting` queue.
+  - **Internal Transfers**: Relocate stock across internal warehouses, storage racks, or production floors without altering total company stock.
+  - **Inventory Adjustments**: Reconcile physical inventory counts against recorded system stock to log scrap, damages, or shrinkage.
+- **Move History / Stock Ledger**: An immutable audit log of every stock movement, tracking timestamps, document references, origins, destinations, and quantities.
+- **Secure Authentication**: Built-in authentication powered by NextAuth.js (credentials & OTP reset flow).
+
+## Example Inventory Flow
+
+1. **Receive Goods from Vendor (+100 kg Steel)**:
+   Create & validate a Receipt $\rightarrow$ Total Stock increases by `+100 kg` at `Main Store`.
+2. **Internal Transfer (Main Store $\rightarrow$ Production Rack)**:
+   Create & validate an Internal Transfer $\rightarrow$ Total stock remains `100 kg`, location ledger updates to `Production Rack`.
+3. **Deliver Finished Goods (-20 kg Steel)**:
+   Create & validate a Delivery Order $\rightarrow$ Total Stock reduces by `-20 kg` (remaining: `80 kg`).
+4. **Adjust Damaged Items (-3 kg Steel)**:
+   Create & apply an Inventory Adjustment for damaged goods $\rightarrow$ Total Stock reduces by `-3 kg` (final count: `77 kg`).
+5. **Audit Ledger**:
+   Inspect **Move History** to view the end-to-end trace of all transactions.
 
 ## Tech Stack
 
@@ -20,7 +35,7 @@ StockSense is a robust, production-grade Inventory Management System (ERP-Lite) 
 - **ORM**: [Prisma](https://www.prisma.io/)
 - **Authentication**: NextAuth.js (Auth.js)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) v4
-- **UI Components**: custom components with [Lucide React](https://lucide.dev/) icons and [Sonner](https://sonner.emilkowal.ski/) for toast notifications.
+- **UI Components**: Custom components with [Lucide React](https://lucide.dev/) icons and [Sonner](https://sonner.emilkowal.ski/) for toast notifications.
 
 ## Getting Started
 

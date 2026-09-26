@@ -57,6 +57,7 @@ model Product {
   unitOfMeasure String @default("Units")
   onHand      Int      @default(0)
   freeToUse   Int      @default(0)
+  minReorderLevel Int  @default(10)
 
   stockMoves  StockMove[]
   orderLines  OrderLineItem[]
