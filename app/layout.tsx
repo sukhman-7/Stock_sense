@@ -6,7 +6,6 @@ import { authOptions } from "./api/auth/[...nextauth]/route"
 import Link from 'next/link'
 import { Box, Package, History, Settings, Home, LogOut } from 'lucide-react'
 import { Toaster } from 'sonner'
-import { NavigationButtons } from '@/components/NavigationButtons'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -80,7 +79,6 @@ export default async function RootLayout({
             </header>
           )}
           <main className="grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-            <NavigationButtons />
             {children}
           </main>
       </body>
