@@ -659,3 +659,138 @@ export async function resetPasswordWithOtp(email: string, otp: string, newPasswo
     return { error: err instanceof Error ? err.message : "Failed to reset password" };
   }
 }
+
+export async function createInventoryAdjustment(reason: string, date: Date, locationId?: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+    
+    if (!session.user?.email) throw new Error("No user email in session")
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+    if (!user) throw new Error("User not found in DB")
+    
+    const count = await prisma.inventoryAdjustment.count()
+    const autoIncrement = String(count + 1).padStart(4, '0')
+    const reference = `INV/ADJ/${autoIncrement}`
+    
+    const adjustment = await prisma.inventoryAdjustment.create({
+      data: {
+        reference,
+        reason,
+        locationId: locationId || null,
+        date,
+        userId: user.id,
+        status: 'Draft'
+      }
+    })
+    
+    revalidatePath('/operations/adjustments')
+    return { success: true, id: adjustment.id }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to create inventory adjustment" }
+  }
+}
+
+export async function addAdjustmentLine(adjustmentId: string, productId: string, countedQty: number) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+
+    const product = await prisma.product.findUnique({ where: { id: productId } })
+    if (!product) throw new Error("Product not found")
+
+    await prisma.adjustmentLineItem.create({
+      data: {
+        adjustmentId,
+        productId,
+        expectedQty: product.onHand,
+        countedQty
+      }
+    })
+    
+    revalidatePath(`/operations/adjustments/${adjustmentId}`)
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to add adjustment line" }
+  }
+}
+
+export async function updateAdjustmentStatus(adjustmentId: string, status: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+    
+    await prisma.inventoryAdjustment.update({
+      where: { id: adjustmentId },
+      data: { status }
+    })
+    
+    revalidatePath('/operations/adjustments')
+    revalidatePath(`/operations/adjustments/${adjustmentId}`)
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to update adjustment status" }
+  }
+}
+
+export async function validateAdjustment(adjustmentId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Not authenticated" }
+    
+    await prisma.$transaction(async (tx) => {
+      // Lock the adjustment
+      await tx.$executeRawUnsafe(`SELECT id FROM "InventoryAdjustment" WHERE id = '${adjustmentId}' FOR UPDATE`);
+
+      const adjustment = await tx.inventoryAdjustment.findUnique({
+        where: { id: adjustmentId },
+        include: { lines: true }
+      })
+      
+      if (!adjustment || adjustment.status === 'Applied' || adjustment.status === 'Cancelled') {
+        throw new Error("Invalid adjustment or already processed")
+      }
+
+      const productIds = adjustment.lines.map(l => l.productId);
+      if (productIds.length > 0) {
+        await tx.$executeRawUnsafe(`SELECT id FROM "Product" WHERE id IN (${productIds.map(id => `'${id}'`).join(',')}) FOR UPDATE`);
+      }
+      
+      await tx.inventoryAdjustment.update({
+        where: { id: adjustmentId },
+        data: { status: 'Applied' }
+      })
+      
+      for (const line of adjustment.lines) {
+        const delta = line.countedQty - line.expectedQty;
+        
+        if (delta !== 0) {
+          await tx.product.update({
+            where: { id: line.productId },
+            data: {
+              onHand: line.countedQty,
+              freeToUse: { increment: delta }
+            }
+          })
+          
+          await tx.stockMove.create({
+            data: {
+              reference: adjustment.reference,
+              productId: line.productId,
+              quantity: delta,
+              toLocationId: delta > 0 ? adjustment.locationId : null,
+              fromLocationId: delta < 0 ? adjustment.locationId : null,
+              status: 'Done'
+            }
+          })
+        }
+      }
+    })
+    
+    revalidatePath('/operations/adjustments')
+    revalidatePath(`/operations/adjustments/${adjustmentId}`)
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to validate adjustment" }
+  }
+}

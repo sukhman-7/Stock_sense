@@ -46,6 +46,7 @@ export default async function RootLayout({
                     <Link href="/operations/receipts" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Receipts (IN)</Link>
                     <Link href="/operations/deliveries" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Delivery Orders (OUT)</Link>
                     <Link href="/operations/internal" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Internal Transfers</Link>
+                    <Link href="/operations/adjustments" className="block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900">Inventory Adjustments</Link>
                   </div>
                 </div>
 
